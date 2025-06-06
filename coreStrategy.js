@@ -1,13 +1,12 @@
 const fs = require('fs').promises;
 const axios = require("axios");
-const { startOfDay, subYears, getTime, subDays, addDays }  = require('date-fns');
+const { subYears, getTime, subDays }  = require('date-fns');
 
 const FILE_PATH = './coins_list.json';
 const BOUGHT_COINS_LIST_PATH = './bought_coins_list.json';
 
 const API_KEY = 'vkCr2iZjkisISvtjSbRkJGla7Gz1PxmJwDM1YOqX3X2ESnTUdwBmEnduapsa2Z8J';
 const TELEGRAM_BOT_TOKEN = '8197515634:AAFJ3I59QgGp3tjoZdH48fCdo9lPe_zDyU4';
-// const SECRET_KEY = 'XotxP9mQlbMLfbmyxxJfou9qqNZjKKIBaeCHgxIP1dCnwuGZ5e2aY8TF5dduhcI3';
 
 // Utility function to delay execution
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,34 +36,41 @@ function generateDailyTradingSignals(ema5, ema10, ema50, prices, dates) {
     const currentDate = new Date(dates[i]);
     const currentPrice = prices[i];
     
-    // Calculate 28-day high for long breakout
-    const highest28Days = Math.max(...prices.slice(Math.max(0, i-27), i+1));
+    // Calculate breakout conditions
+    const highest28Days = Math.max(...prices.slice(Math.max(0, i-28), i));
+    const lowest14Days = Math.min(...prices.slice(Math.max(0, i-14), i));
     
-    // Calculate 14-day low for short breakout  
-    const lowest14Days = Math.min(...prices.slice(Math.max(0, i-13), i+1));
-    
-    let signal = "hold";
-    
-    // Long condition: EMA5 >= EMA10 >= EMA50 AND price breaks above 28-day high
-    if (
-      ema5[i] >= ema10[i] && 
-      ema10[i] >= ema50[i] && 
-      currentPrice >= highest28Days
-    ) {
-      signal = 'buy';
-    } 
-    // Short condition: EMA alignment is broken OR price breaks below 14-day low
-    else if (
-      (ema5[i] < ema10[i] || ema10[i] < ema50[i]) ||
-      currentPrice <= lowest14Days
-    ) {
-      signal = 'sell';
+    // Determine breakout direction
+    let lastBreakout = 'none';
+    if (currentPrice > highest28Days) {
+        lastBreakout = 'up';
+    } else if (currentPrice < lowest14Days) {
+        lastBreakout = 'down';
     }
     
-    signals.push({ 
-      signal, 
-      date: currentDate.toISOString(), 
-      price: currentPrice
+    // Calculate signal components
+    const signalComponents = [
+        ema5[i] >= ema10[i] ? 1 : 0,
+        ema10[i] >= ema50[i] ? 1 : 0,
+        lastBreakout === 'up' ? 1 : 0
+    ];
+    
+    // Final signal is minimum of all components
+    const finalSignal = Math.min(...signalComponents);
+    
+    let action = 'hold';
+    if (finalSignal === 1) {
+        action = 'buy';
+    } else if (finalSignal === 0) {
+        action = 'sell';
+    }
+    
+    signals.push({
+        signal: action,
+        date: currentDate.toISOString(),
+        price: currentPrice,
+        components: signalComponents,
+        finalSignal: finalSignal
     });
   }
   
@@ -332,7 +338,8 @@ async function main() {
   try {
     const data = await fs.readFile(FILE_PATH, 'utf8');
     const jsonData = JSON.parse(data);
-    const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
+    // const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
+    const coinsList =  ['ETH']
     
     const coinsData = {};
 

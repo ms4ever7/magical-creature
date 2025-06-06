@@ -13,7 +13,7 @@ async function fetchCoinListFromCoinGecko() {
       url: "https://api.coingecko.com/api/v3/coins/markets",
       params: {
         vs_currency: "usd",
-        per_page: 65,
+        per_page: 50,
         page: 1,
         order: 'market_cap_desc',
         sparkline: false
@@ -107,7 +107,7 @@ async function fetchAndSaveCoins(coinList) {
     const boughtCoins = await readBoughtCoins();
   
     for (const coin of coinList) {
-      if (Object.keys(coinsData).length >= 120) break;
+      if (Object.keys(coinsData).length >= 20) break;
   
       // Skip stablecoins
       if (notUsedCoins.some(keyword => coin.symbol.toLowerCase().includes(keyword))) {

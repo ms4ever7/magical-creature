@@ -3,7 +3,7 @@
     "id": "bitcoin",
     "symbol": "btc",
     "name": "Bitcoin",
-    "market_cap": 2100567887104,
+    "market_cap": 2052778747025,
     "bought": false,
     "market_cap_rank": 1,
     "ath": 111814
@@ -12,7 +12,7 @@
     "id": "ethereum",
     "symbol": "eth",
     "name": "Ethereum",
-    "market_cap": 315232768638,
+    "market_cap": 297079048025,
     "bought": false,
     "market_cap_rank": 2,
     "ath": 4878.26
@@ -21,7 +21,7 @@
     "id": "ripple",
     "symbol": "xrp",
     "name": "XRP",
-    "market_cap": 132852965496,
+    "market_cap": 125237144136,
     "bought": false,
     "market_cap_rank": 4,
     "ath": 3.4
@@ -30,7 +30,7 @@
     "id": "binancecoin",
     "symbol": "bnb",
     "name": "BNB",
-    "market_cap": 96455196347,
+    "market_cap": 93543675586,
     "bought": false,
     "market_cap_rank": 5,
     "ath": 788.84
@@ -39,7 +39,7 @@
     "id": "solana",
     "symbol": "sol",
     "name": "Solana",
-    "market_cap": 82293696450,
+    "market_cap": 77334312111,
     "bought": false,
     "market_cap_rank": 6,
     "ath": 293.31
@@ -48,7 +48,7 @@
     "id": "dogecoin",
     "symbol": "doge",
     "name": "Dogecoin",
-    "market_cap": 29052740549,
+    "market_cap": 26278341509,
     "bought": false,
     "market_cap_rank": 8,
     "ath": 0.731578
@@ -57,8 +57,8 @@
     "id": "tron",
     "symbol": "trx",
     "name": "TRON",
-    "market_cap": 25747535087,
-    "bought": false,
+    "market_cap": 26233817327,
+    "bought": true,
     "market_cap_rank": 9,
     "ath": 0.431288
   },
@@ -66,7 +66,7 @@
     "id": "cardano",
     "symbol": "ada",
     "name": "Cardano",
-    "market_cap": 24656402958,
+    "market_cap": 23141915380,
     "bought": false,
     "market_cap_rank": 10,
     "ath": 3.09
@@ -75,7 +75,7 @@
     "id": "wrapped-bitcoin",
     "symbol": "wbtc",
     "name": "Wrapped Bitcoin",
-    "market_cap": 13625262814,
+    "market_cap": 13291403600,
     "bought": false,
     "market_cap_rank": 12,
     "ath": 111685
@@ -84,7 +84,7 @@
     "id": "sui",
     "symbol": "sui",
     "name": "Sui",
-    "market_cap": 11135625523,
+    "market_cap": 10263023069,
     "bought": false,
     "market_cap_rank": 15,
     "ath": 5.35
@@ -93,7 +93,7 @@
     "id": "chainlink",
     "symbol": "link",
     "name": "Chainlink",
-    "market_cap": 9305687363,
+    "market_cap": 8683983437,
     "bought": false,
     "market_cap_rank": 16,
     "ath": 52.7
@@ -102,7 +102,7 @@
     "id": "avalanche-2",
     "symbol": "avax",
     "name": "Avalanche",
-    "market_cap": 8934896240,
+    "market_cap": 8162942200,
     "bought": false,
     "market_cap_rank": 17,
     "ath": 144.96
@@ -111,7 +111,7 @@
     "id": "stellar",
     "symbol": "xlm",
     "name": "Stellar",
-    "market_cap": 8530145954,
+    "market_cap": 8140536408,
     "bought": false,
     "market_cap_rank": 18,
     "ath": 0.875563
@@ -120,7 +120,7 @@
     "id": "bitcoin-cash",
     "symbol": "bch",
     "name": "Bitcoin Cash",
-    "market_cap": 8017539029,
+    "market_cap": 7680249985,
     "bought": false,
     "market_cap_rank": 20,
     "ath": 3785.82
@@ -129,7 +129,7 @@
     "id": "the-open-network",
     "symbol": "ton",
     "name": "Toncoin",
-    "market_cap": 7858295667,
+    "market_cap": 7669221696,
     "bought": false,
     "market_cap_rank": 21,
     "ath": 8.25
@@ -138,7 +138,7 @@
     "id": "shiba-inu",
     "symbol": "shib",
     "name": "Shiba Inu",
-    "market_cap": 7709071332,
+    "market_cap": 7226387848,
     "bought": false,
     "market_cap_rank": 22,
     "ath": 0.00008616
@@ -147,180 +147,36 @@
     "id": "hedera-hashgraph",
     "symbol": "hbar",
     "name": "Hedera",
-    "market_cap": 7301056097,
+    "market_cap": 6949395415,
     "bought": false,
-    "market_cap_rank": 23,
+    "market_cap_rank": 24,
     "ath": 0.569229
   },
   "ltc": {
     "id": "litecoin",
     "symbol": "ltc",
     "name": "Litecoin",
-    "market_cap": 6817381674,
+    "market_cap": 6376907573,
     "bought": false,
     "market_cap_rank": 26,
     "ath": 410.26
-  },
-  "xmr": {
-    "id": "monero",
-    "symbol": "xmr",
-    "name": "Monero",
-    "market_cap": 6356800580,
-    "bought": false,
-    "market_cap_rank": 28,
-    "ath": 542.33
   },
   "dot": {
     "id": "polkadot",
     "symbol": "dot",
     "name": "Polkadot",
-    "market_cap": 6317312775,
+    "market_cap": 5942276041,
     "bought": false,
     "market_cap_rank": 29,
     "ath": 54.98
   },
-  "pepe": {
-    "id": "pepe",
-    "symbol": "pepe",
-    "name": "Pepe",
-    "market_cap": 5231712786,
+  "xmr": {
+    "id": "monero",
+    "symbol": "xmr",
+    "name": "Monero",
+    "market_cap": 5900882877,
     "bought": false,
-    "market_cap_rank": 33,
-    "ath": 0.00002803
-  },
-  "aave": {
-    "id": "aave",
-    "symbol": "aave",
-    "name": "Aave",
-    "market_cap": 4045761580,
-    "bought": false,
-    "market_cap_rank": 37,
-    "ath": 661.69
-  },
-  "uni": {
-    "id": "uniswap",
-    "symbol": "uni",
-    "name": "Uniswap",
-    "market_cap": 4006934271,
-    "bought": false,
-    "market_cap_rank": 38,
-    "ath": 44.92
-  },
-  "tao": {
-    "id": "bittensor",
-    "symbol": "tao",
-    "name": "Bittensor",
-    "market_cap": 3425909709,
-    "bought": false,
-    "market_cap_rank": 40,
-    "ath": 757.6
-  },
-  "apt": {
-    "id": "aptos",
-    "symbol": "apt",
-    "name": "Aptos",
-    "market_cap": 3135605564,
-    "bought": false,
-    "market_cap_rank": 42,
-    "ath": 19.92
-  },
-  "near": {
-    "id": "near",
-    "symbol": "near",
-    "name": "NEAR Protocol",
-    "market_cap": 3081421822,
-    "bought": false,
-    "market_cap_rank": 43,
-    "ath": 20.44
-  },
-  "icp": {
-    "id": "internet-computer",
-    "symbol": "icp",
-    "name": "Internet Computer",
-    "market_cap": 2822274345,
-    "bought": false,
-    "market_cap_rank": 48,
-    "ath": 700.65
-  },
-  "ondo": {
-    "id": "ondo-finance",
-    "symbol": "ondo",
-    "name": "Ondo",
-    "market_cap": 2696821065,
-    "bought": false,
-    "market_cap_rank": 49,
-    "ath": 2.14
-  },
-  "etc": {
-    "id": "ethereum-classic",
-    "symbol": "etc",
-    "name": "Ethereum Classic",
-    "market_cap": 2681227308,
-    "bought": false,
-    "market_cap_rank": 50,
-    "ath": 167.09
-  },
-  "trump": {
-    "id": "official-trump",
-    "symbol": "trump",
-    "name": "Official Trump",
-    "market_cap": 2256552283,
-    "bought": false,
-    "market_cap_rank": 56,
-    "ath": 73.43
-  },
-  "fet": {
-    "id": "fetch-ai",
-    "symbol": "fet",
-    "name": "Artificial Superintelligence Alliance",
-    "market_cap": 2158307346,
-    "bought": false,
-    "market_cap_rank": 58,
-    "ath": 3.45
-  },
-  "vet": {
-    "id": "vechain",
-    "symbol": "vet",
-    "name": "VeChain",
-    "market_cap": 2127474472,
-    "bought": false,
-    "market_cap_rank": 59,
-    "ath": 0.280991
-  },
-  "render": {
-    "id": "render-token",
-    "symbol": "render",
-    "name": "Render",
-    "market_cap": 2066572071,
-    "bought": false,
-    "market_cap_rank": 60,
-    "ath": 13.53
-  },
-  "atom": {
-    "id": "cosmos",
-    "symbol": "atom",
-    "name": "Cosmos Hub",
-    "market_cap": 2009214982,
-    "bought": false,
-    "market_cap_rank": 61,
-    "ath": 44.45
-  },
-  "ena": {
-    "id": "ethena",
-    "symbol": "ena",
-    "name": "Ethena",
-    "market_cap": 1968060142,
-    "bought": false,
-    "market_cap_rank": 62,
-    "ath": 1.52
-  },
-  "pol": {
-    "id": "polygon-ecosystem-token",
-    "symbol": "pol",
-    "name": "POL (ex-MATIC)",
-    "market_cap": 1926105956,
-    "bought": false,
-    "market_cap_rank": 64,
-    "ath": 1.29
+    "market_cap_rank": 30,
+    "ath": 542.33
   }
 }

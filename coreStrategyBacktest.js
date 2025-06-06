@@ -27,33 +27,32 @@ function calculateEMA(data, period) {
   return emaResults;
 }
 
-function generateDailyTradingSignals(shortMA, longMA, prices, dates) {
+function generateDailyTradingSignals(ema5, ema10, ema50, prices, dates) {
   let signals = [];
-  let highestPrice100Days = null;
-  let lowestPrice50Days = null;
 
   // We start from index 99 to ensure we have enough data for our 100-day lookback
-  for (let i = 99; i < shortMA.length; i++) {
+  for (let i = 49; i < ema5.length; i++) {
     const currentDate = new Date(dates[i]);
     const currentPrice = prices[i];
     
-    // Update 100-day high
-    highestPrice100Days = Math.max(...prices.slice(i-longMA, i+1));
+    highest28Days = Math.max(...prices.slice(i-27, i+1));
     
-    // Update 50-day low
-    lowestPrice50Days = Math.min(...prices.slice(Math.max(0, i-shortMA), i+1));
+    lowest14Days = Math.min(...prices.slice(Math.max(0, i-13), i+1));
 
     let signal = "hold";
 
     // Check the EMA 50/100 strategy or Breakout strategy to be in the market
     if (
-        shortMA[i] > longMA[i]
-        && currentPrice >= highestPrice100Days
+      ema5[i] >= ema10[i] && 
+      ema10[i] >= ema50[i] && 
+      currentPrice >= highest28Days
     ) {
       signal = 'buy';
-    } else if (
-        shortMA[i] < longMA[i]
-        || currentPrice <= lowestPrice50Days
+    } 
+    // Short condition: EMA alignment is broken OR price breaks below 14-day low
+    else if (
+      (ema5[i] < ema10[i] || ema10[i] < ema50[i]) ||
+      currentPrice <= lowest14Days
     ) {
       signal = 'sell';
     }
@@ -137,8 +136,9 @@ function multiCoinBacktest(coinsData) {
 
 
 function analyzeData(coinData, coinSymbol) {
-  const shortPeriod = 25;
-  const longPeriod = 50;
+  let shortPeriod = 5;
+  let mediumPeriod = 10
+  let longPeriod = 50;
 
   // Extract closing prices and dates
   const closingPrices = coinData.map((priceList) => priceList[4]);
@@ -150,11 +150,13 @@ function analyzeData(coinData, coinSymbol) {
 
   const dailyTradingSignals = generateDailyTradingSignals(
     shortEMA,
+    mediumPeriod,
     longEMA,
     closingPrices,
     dates
   );
 
+  
   const appropriateSignals = dailyTradingSignals.filter(({ signal }) => signal === "buy" || signal === "sell");
 
   return analyzeProfitLoss(appropriateSignals, coinSymbol);;
@@ -304,7 +306,7 @@ async function main() {
   try {
     const data = await fs.readFile(FILE_PATH, 'utf8');
     const jsonData = JSON.parse(data);
-    const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
+    const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase()).slice(0,3);
 
     const coinsData = {};
 
