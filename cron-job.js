@@ -45,13 +45,23 @@ async function runDataFetch() {
   }
 }
 
+function isLastDayOfMonth(date) {
+  const tomorrow = new Date(date);
+  tomorrow.setDate(date.getDate() + 1);
+  return tomorrow.getDate() === 1;
+}
+
 // Monthly data fetch - Run on the last day of each month at 11:59 PM UTC
-cron.schedule('59 23 L * *', () => {
-  console.log('📊 MONTHLY DATA FETCH - Triggered at:', new Date().toISOString());
-  runDataFetch();
+cron.schedule('59 23 28-31 * *', () => {
+  const today = new Date();
+  if (isLastDayOfMonth(today)) {
+    console.log('📊 MONTHLY DATA FETCH - Last day of month triggered at:', new Date().toISOString());
+    runDataFetch();
+  }
 }, {
   timezone: "UTC"
 });
+
 
 // Schedule to run at 12:01 AM UTC every day (2:01 AM Poland time)
 cron.schedule('1 0 * * *', () => {
