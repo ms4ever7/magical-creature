@@ -1,3 +1,4 @@
+// === CONFIG ===
 const fs = require('fs').promises;
 const axios = require("axios");
 const { subYears, getTime, subDays }  = require('date-fns');
@@ -8,7 +9,7 @@ const BOUGHT_COINS_LIST_PATH = './bought_coins_list.json';
 const API_KEY = 'vkCr2iZjkisISvtjSbRkJGla7Gz1PxmJwDM1YOqX3X2ESnTUdwBmEnduapsa2Z8J';
 const TELEGRAM_BOT_TOKEN = '8197515634:AAFJ3I59QgGp3tjoZdH48fCdo9lPe_zDyU4';
 
-// Utility function to delay execution
+// === UTILS ===
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function calculateEMA(data, period) {
@@ -16,65 +17,49 @@ function calculateEMA(data, period) {
   let ema = Number(data[0]);
   const emaResults = [ema];
 
-  // Calculate EMA for remaining periods
-  for (let currentIndex = 1; currentIndex < data.length; currentIndex++) {
-    let previousEMA = emaResults[emaResults.length - 1];
-    let currentPrice = Number(data[currentIndex]);
-
-    let currentEMA = (currentPrice - previousEMA) * smoothingFactor + previousEMA;
-    emaResults.push(currentEMA);
+  for (let i = 1; i < data.length; i++) {
+    const price = Number(data[i]);
+    ema = (price - emaResults[i - 1]) * smoothingFactor + emaResults[i - 1];
+    emaResults.push(ema);
   }
 
   return emaResults;
 }
 
-function generateDailyTradingSignals(ema5, ema10, ema50, prices, dates) {
-  let signals = [];
+function generateDailyTargetPositions(ema5, ema10, ema50, prices, dates) {
+  let targetPositions = [];
+  let lastBreakoutDirection = 'none';
   
-  // Start from index 49 to ensure we have enough data for our 50-day lookback
   for (let i = 49; i < ema5.length; i++) {
-    const currentDate = new Date(dates[i]);
     const currentPrice = prices[i];
-    
-    // Calculate breakout conditions
-    const highest28Days = Math.max(...prices.slice(Math.max(0, i-28), i));
-    const lowest14Days = Math.min(...prices.slice(Math.max(0, i-14), i));
-    
-    // Determine breakout direction
-    let lastBreakout = 'none';
-    if (currentPrice > highest28Days) {
-        lastBreakout = 'up';
-    } else if (currentPrice < lowest14Days) {
-        lastBreakout = 'down';
+
+    const highest28Days = Math.max(...prices.slice(Math.max(0, i - 28), i));
+    const lowest14Days = Math.min(...prices.slice(Math.max(0, i - 14), i));
+
+     // Перевірка на новий breakout
+    if (currentPrice >= highest28Days) {
+      lastBreakoutDirection = 'up';
+    } else if (currentPrice <= lowest14Days) {
+      lastBreakoutDirection = 'down';
     }
-    
-    // Calculate signal components
+
+    // Логіка targetPosition (1 — позиція, 0 — поза позицією)
     const signalComponents = [
-        ema5[i] >= ema10[i] ? 1 : 0,
-        ema10[i] >= ema50[i] ? 1 : 0,
-        lastBreakout === 'up' ? 1 : 0
+      ema5[i] >= ema10[i] ? 1 : 0,
+      ema10[i] >= ema50[i] ? 1 : 0,
+      lastBreakoutDirection === 'up' ? 1 : 0
     ];
-    
-    // Final signal is minimum of all components
-    const finalSignal = Math.min(...signalComponents);
-    
-    let action = 'hold';
-    if (finalSignal === 1) {
-        action = 'buy';
-    } else if (finalSignal === 0) {
-        action = 'sell';
-    }
-    
-    signals.push({
-        signal: action,
-        date: currentDate.toISOString(),
-        price: currentPrice,
-        components: signalComponents,
-        finalSignal: finalSignal
+
+    const finalSignal = Math.min(...signalComponents); // 1 або 0
+
+    targetPositions.push({
+      targetPosition: finalSignal,
+      date: new Date(dates[i]),
+      price: currentPrice
     });
   }
   
-  return signals;
+  return targetPositions;
 }
 
 async function fetchCoinWithRetry(fetchFunction, ...args) {
@@ -155,14 +140,13 @@ function analyzeData(coinData, coinSymbol) {
 
   // Extract closing prices and dates
   const closingPrices = coinData.map((priceList) => priceList[4]);
-
   const dates = coinData.map((priceList) => new Date(priceList[0]).toISOString());
 
   const shortEMA = calculateEMA(closingPrices, shortPeriod);
   const mediumEMA = calculateEMA(closingPrices, mediumPeriod);
   const longEMA = calculateEMA(closingPrices, longPeriod);
 
-  const dailyTradingSignals = generateDailyTradingSignals(
+  const targetPositions = generateDailyTargetPositions(
     shortEMA,
     mediumEMA,
     longEMA,
@@ -170,121 +154,71 @@ function analyzeData(coinData, coinSymbol) {
     dates
   );
 
-  const appropriateSignals = dailyTradingSignals.filter(({ signal }) => signal === "buy" || signal === "sell");
-  const results = [];
-
-  for (const signal of appropriateSignals) {
-    if (signal.signal === "buy") {
-      results.push({
-        coinSymbol,
-        action: 'Buy',
-        date: new Date(signal.date),
-        price: signal.price
-      });
-
-    } else if (signal.signal === "sell") {
-      results.push({
-        coinSymbol,
-        action: 'Sell',
-        date: new Date(signal.date),
-        price: signal.price
-      });
-    }
-  }
-
-  return results;
+  // Повертаємо список з позиціями (targetPosition 0/1)
+  return targetPositions.map(({targetPosition, date, price}) => ({
+    coinSymbol,
+    targetPosition,
+    date,
+    price
+  }));
 }
 
-async function calculatePossibleTrades(transactionsArg) {
-  // Read the current bought status
+async function calculatePossibleTrades(signals) {
   let coinsDataInJson = {};
   let boughtCoinsDataInJson = {};
+
   try {
     const data = await fs.readFile(FILE_PATH, 'utf8');
     const boughtData = await fs.readFile(BOUGHT_COINS_LIST_PATH, 'utf8');
     coinsDataInJson = JSON.parse(data);
     boughtCoinsDataInJson = JSON.parse(boughtData);
   } catch (error) {
-    console.error('Error reading bought status file:', error);
+    console.error('Error reading files:', error);
+    return {};
   }
 
-  const groupedByCoin = {};
-  const todayDate = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
-  const yesterdaysDate = subDays(todayDate, 1);
-  console.log('Date is:', yesterdaysDate);
+  const changes = {};
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
 
-  // Step 1: Group transactions by coin symbol
-  transactionsArg.forEach(transaction => {
-    const { coinSymbol, action, date, price } = transaction;
-    if (!groupedByCoin[coinSymbol]) {
-      groupedByCoin[coinSymbol] = [];
+  for (const signal of signals) {
+    const signalDate = new Date(signal.date);
+
+    signalDate.setHours(0, 0, 0, 0);
+    if (signalDate.getTime() !== yesterday.getTime()) continue;
+
+    const coin = signal.coinSymbol.toLowerCase();
+    const isBought = Boolean(boughtCoinsDataInJson[coin]);
+    const target = signal.targetPosition;
+
+    if (target === 1 && !isBought) {
+      changes[coin] = 1;
+
+      coinsDataInJson[coinSymbol.toLowerCase()].bought = true;
+
+      boughtCoinsDataInJson[coinSymbol.toLowerCase()] = {
+        ...coinsDataInJson[coinSymbol.toLowerCase()],
+        bought: true
+      };
+    } else if (target === 0 && isBought) {
+      changes[coin] = 0;
+
+      // Update bought status
+      coinsDataInJson[coinSymbol.toLowerCase()].bought = false;
+      // Remove from bought_coins_list.json
+      delete boughtCoinsDataInJson[coinSymbol.toLowerCase()];
     }
-    groupedByCoin[coinSymbol].push({
-      action,
-      date: new Date(date),
-      price: parseFloat(price)
-    });
-  });
-
-  const results = [];
-
-  // Step 2: Process transactions for each coin
-  for (const coinSymbol in groupedByCoin) {
-    const transactions = groupedByCoin[coinSymbol].sort((a, b) => b.date - a.date); // Sort in descending order (most recent first)
-
-    const isBought = boughtCoinsDataInJson[coinSymbol.toLowerCase()]?.bought || false;
-
-    if (!isBought) {
-      const yesterdayBuy = transactions.find(t => {
-        return t.action === 'Buy' && t.date >= yesterdaysDate
-      });
-
-      if (yesterdayBuy) {
-        results.push({
-          coinSymbol,
-          date: yesterdayBuy.date,
-          price: yesterdayBuy.price,
-          action: 'Buy',
-          marketCapRank: coinsDataInJson[coinSymbol.toLowerCase()].market_cap_rank,
-          marketCap: coinsDataInJson[coinSymbol.toLowerCase()].market_cap
-        });
-
-        coinsDataInJson[coinSymbol.toLowerCase()].bought = true;
-
-        boughtCoinsDataInJson[coinSymbol.toLowerCase()] = {
-          ...coinsDataInJson[coinSymbol.toLowerCase()],
-          bought: true
-        };
-      }
-
-    } else {
-      // If t he coin is already bought, look for a sell signal
-      const latestSell = transactions.find(t => t.action === 'Sell' && t.date >= yesterdaysDate);
-
-      if (latestSell) {
-        results.push({
-          coinSymbol,
-          date: latestSell.date,
-          price: latestSell.price,
-          action: 'Sell',
-          marketCapRank: coinsDataInJson[coinSymbol.toLowerCase()].market_cap_rank,
-          marketCap: coinsDataInJson[coinSymbol.toLowerCase()].market_cap
-        });
-        // Update bought status
-        coinsDataInJson[coinSymbol.toLowerCase()].bought = false;
-
-        // Remove from bought_coins_list.json
-        delete boughtCoinsDataInJson[coinSymbol.toLowerCase()];
-      }
-    } 
   }
 
+  //TODO: move file writing to different module
+  // move 0 and 1 for each item to different json file so that you have target and another command to write that you bought smth
   await fs.writeFile(FILE_PATH, JSON.stringify(coinsDataInJson, null, 2));
 
   await fs.writeFile(BOUGHT_COINS_LIST_PATH, JSON.stringify(boughtCoinsDataInJson, null, 2));
-
-  return results;
+  return changes;
 }
+
 
 async function sendTelegramMessage(message) {
   const TELEGRAM_CHAT_ID = '379623218';
@@ -300,7 +234,7 @@ async function sendTelegramMessage(message) {
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'HTML' // Allows basic HTML formatting
+        parse_mode: 'HTML'
       })
     });
     
@@ -314,23 +248,22 @@ async function sendTelegramMessage(message) {
   }
 }
 
-function formatTradingMessage(possibleTrades) {
-  if (possibleTrades.length === 0) {
-    return '🛌 <b>Trading Update</b>\n\nNothing to buy today, chill :)';
+function formatTradingMessage(changes) {
+  const coins = Object.keys(changes);
+  
+  if (coins.length === 0) {
+    return '🛌 <b>Trading Update</b>\n\nNothing to buy or sell today, chill :)';
   }
-  
+
   let message = '📊 <b>Trading Signals Today</b>\n\n';
-  
-  possibleTrades.forEach((trade, index) => {
-    const emoji = trade.action === 'Buy' ? '🟢' : '🔴';
-    message += `${emoji} <b>${trade.coinSymbol}</b>\n`;
-    message += `Action: ${trade.action.toUpperCase()}\n`;
-    message += `Price: ${trade.price}\n`;
-    message += `Market Cap Rank: #${trade.marketCapRank}\n`;
-    message += `Market Cap: ${trade.marketCap.toLocaleString()}\n`;
-    message += `Date: ${new Date(trade.date).toLocaleDateString()}\n\n`;
+
+  coins.forEach(coin => {
+    const signal = changes[coin];
+    const emoji = signal === 1 ? '🟢' : '🔴';
+    const action = signal === 1 ? '1' : '0';
+    message += `${emoji} <b>${coin.toUpperCase()}</b> — ${action}\n`;
   });
-  
+
   return message;
 }
 
@@ -338,8 +271,7 @@ async function main() {
   try {
     const data = await fs.readFile(FILE_PATH, 'utf8');
     const jsonData = JSON.parse(data);
-    // const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
-    const coinsList =  ['ETH']
+    const coinsList = Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
     
     const coinsData = {};
 
@@ -360,7 +292,6 @@ async function main() {
     const possibleTrades = await calculatePossibleTrades(dataAnalized);
 
     sendTelegramMessage(formatTradingMessage(possibleTrades));
-    console.log('Coin to buy/sell today:', possibleTrades.length ? possibleTrades : 'Nothing to buy today, chill :)');
   } catch (err) {
     console.error(`Main Error ${err}`);
   }
