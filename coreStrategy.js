@@ -195,19 +195,18 @@ async function calculatePossibleTrades(signals) {
     if (target === 1 && !isBought) {
       changes[coin] = 1;
 
-      coinsDataInJson[coinSymbol.toLowerCase()].bought = true;
+      coinsDataInJson[coin].bought = true;
 
-      boughtCoinsDataInJson[coinSymbol.toLowerCase()] = {
-        ...coinsDataInJson[coinSymbol.toLowerCase()],
+      boughtCoinsDataInJson[coin] = {
+        ...coinsDataInJson[coin],
         bought: true
       };
     } else if (target === 0 && isBought) {
       changes[coin] = 0;
 
-      // Update bought status
-      coinsDataInJson[coinSymbol.toLowerCase()].bought = false;
+      coinsDataInJson[coin].bought = false;
       // Remove from bought_coins_list.json
-      delete boughtCoinsDataInJson[coinSymbol.toLowerCase()];
+      delete boughtCoinsDataInJson[coin];
     }
   }
 
