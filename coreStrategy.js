@@ -210,11 +210,6 @@ async function calculatePossibleTrades(signals) {
     }
   }
 
-  //TODO: move file writing to different module
-  // move 0 and 1 for each item to different json file so that you have target and another command to write that you bought smth
-  await fs.writeFile(FILE_PATH, JSON.stringify(coinsDataInJson, null, 2));
-
-  await fs.writeFile(BOUGHT_COINS_LIST_PATH, JSON.stringify(boughtCoinsDataInJson, null, 2));
   return changes;
 }
 
@@ -251,7 +246,7 @@ function formatTradingMessage(changes) {
   const coins = Object.keys(changes);
   
   if (coins.length === 0) {
-    return '🛌 <b>Trading Update</b>\n\nNothing to buy or sell today, chill :)';
+    return '🛌 Nothing to buy or sell today, chill :)';
   }
 
   let message = '📊 <b>Trading Signals Today</b>\n\n';

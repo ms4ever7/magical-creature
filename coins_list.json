@@ -13,7 +13,7 @@
     "symbol": "eth",
     "name": "Ethereum",
     "market_cap": 297079048025,
-    "bought": false,
+    "bought": true,
     "market_cap_rank": 2,
     "ath": 4878.26
   },
@@ -58,7 +58,7 @@
     "symbol": "trx",
     "name": "TRON",
     "market_cap": 26233817327,
-    "bought": true,
+    "bought": false,
     "market_cap_rank": 9,
     "ath": 0.431288
   },
@@ -121,7 +121,7 @@
     "symbol": "bch",
     "name": "Bitcoin Cash",
     "market_cap": 7680249985,
-    "bought": false,
+    "bought": true,
     "market_cap_rank": 20,
     "ath": 3785.82
   },
