@@ -13,7 +13,7 @@
     "symbol": "eth",
     "name": "Ethereum",
     "market_cap": 297079048025,
-    "bought": true,
+    "bought": false,
     "market_cap_rank": 2,
     "ath": 4878.26
   },
