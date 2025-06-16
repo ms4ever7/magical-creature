@@ -1,11 +1,9 @@
-const fs = require('fs').promises;
-const axios = require("axios");
-const { startOfDay, subYears, getTime, format }  = require('date-fns');
-const Table = require('cli-table3');
+import axios from "axios";
+import { startOfDay, subYears, getTime, format }  from 'date-fns';
+import Table from 'cli-table3';
+import { fetchCoinFromBinance } from "./gateway";
 
-const FILE_PATH = './coins_list.json';
 const API_KEY = 'vkCr2iZjkisISvtjSbRkJGla7Gz1PxmJwDM1YOqX3X2ESnTUdwBmEnduapsa2Z8J';
-// const SECRET_KEY = 'XotxP9mQlbMLfbmyxxJfou9qqNZjKKIBaeCHgxIP1dCnwuGZ5e2aY8TF5dduhcI3';
 
 // Utility function to delay execution
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -85,38 +83,6 @@ async function fetchCoinWithRetry(fetchFunction, ...args) {
         throw error;
       }
     }
-  }
-}
-
-async function fetchCoinFromBinance(symbol) {
-  const endDate = startOfDay(new Date());
-  const startDate = subYears(endDate, 1);
-
-  const startTime = getTime(startDate);
-  const endTime = getTime(endDate);
-
-  const options = {
-    method: "GET",
-    url: "https://api.binance.com/api/v3/klines",
-    params: {
-      symbol: `${symbol}USDT`,
-      interval: '1d',
-      startTime,
-      endTime
-    },
-    headers: {
-      accept: "application/json",
-      "X-MBX-APIKEY": API_KEY,
-    },
-  };
-  
-  try {
-    const response = await axios.request(options);
-    
-    return response.data;
-  } catch (err) {
-    console.error(`Binance fetching coin list error: ${err}`);
-    throw err;
   }
 }
 
@@ -304,7 +270,7 @@ function generateResultTable(results, totalProfitLoss) {
 
 async function main() {
   try {
-    const data = await fs.readFile(FILE_PATH, 'utf8');
+    const data = await getCoinsList();
     const jsonData = JSON.parse(data);
     const coinsList =  Object.values(jsonData).map(coin => coin.symbol.toUpperCase()).slice(0,3);
 

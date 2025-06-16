@@ -1,21 +1,38 @@
-// === CONFIG ===
-const fs = require('fs').promises;
-const axios = require("axios");
-const { subYears, getTime, subDays }  = require('date-fns');
+import {
+  getCoinsList,
+  getBoughtCoinsList,
+  updateBoughtCoinsList,
+  fetchCoinFromBinance,
+  sendTelegramMessage,
+  BinanceKlineData,
+  CoinsDataMap
+} from './gateway.ts';
 
-const FILE_PATH = './coins_list.json';
-const BOUGHT_COINS_LIST_PATH = './bought_coins_list.json';
 
-const API_KEY = 'vkCr2iZjkisISvtjSbRkJGla7Gz1PxmJwDM1YOqX3X2ESnTUdwBmEnduapsa2Z8J';
-const TELEGRAM_BOT_TOKEN = '8197515634:AAFJ3I59QgGp3tjoZdH48fCdo9lPe_zDyU4';
+interface TargetPosition {
+  targetPosition: number;
+  date: Date;
+  price: number;
+}
+
+interface AnalysisResult {
+  coinSymbol: string;
+  targetPosition: number;
+  date: Date;
+  price: number;
+}
+
+interface PossibleTrades {
+  [coin: string]: number;
+}
 
 // === UTILS ===
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-function calculateEMA(data, period) {
+function calculateEMA(data: number[], period: number): number[] {
   const smoothingFactor = 2 / (period + 1);
   let ema = Number(data[0]);
-  const emaResults = [ema];
+  const emaResults: number[] = [ema];
 
   for (let i = 1; i < data.length; i++) {
     const price = Number(data[i]);
@@ -26,9 +43,15 @@ function calculateEMA(data, period) {
   return emaResults;
 }
 
-function generateDailyTargetPositions(ema5, ema10, ema50, prices, dates) {
-  let targetPositions = [];
-  let lastBreakoutDirection = 'none';
+function generateDailyTargetPositions(
+  ema5: number[], 
+  ema10: number[], 
+  ema50: number[], 
+  prices: number[], 
+  dates: string[]
+): TargetPosition[] {
+  const targetPositions: TargetPosition[] = [];
+  let lastBreakoutDirection: 'up' | 'down' | 'none' = 'none';
   
   for (let i = 49; i < ema5.length; i++) {
     const currentPrice = prices[i];
@@ -44,7 +67,7 @@ function generateDailyTargetPositions(ema5, ema10, ema50, prices, dates) {
     }
 
     // Логіка targetPosition (1 — позиція, 0 — поза позицією)
-    const signalComponents = [
+    const signalComponents: number[] = [
       ema5[i] >= ema10[i] ? 1 : 0,
       ema10[i] >= ema50[i] ? 1 : 0,
       lastBreakoutDirection === 'up' ? 1 : 0
@@ -62,7 +85,10 @@ function generateDailyTargetPositions(ema5, ema10, ema50, prices, dates) {
   return targetPositions;
 }
 
-async function fetchCoinWithRetry(fetchFunction, ...args) {
+async function fetchCoinWithRetry<T extends any[], R>(
+  fetchFunction: (...args: T) => Promise<R>, 
+  ...args: T
+): Promise<R> {
   const maxRetries = 5;
   const baseDelay = 300; // 3 seconds
 
@@ -76,7 +102,7 @@ async function fetchCoinWithRetry(fetchFunction, ...args) {
       }
 
       return await fetchFunction(...args);
-    } catch (error) {
+    } catch (error: any) {
       if (error.response && error.response.status === 429) {
         console.log(`Rate limit hit. Attempt ${attempt + 1} of ${maxRetries}`);
         if (attempt === maxRetries - 1) throw error;
@@ -85,42 +111,12 @@ async function fetchCoinWithRetry(fetchFunction, ...args) {
       }
     }
   }
-}
-
-async function fetchCoinFromBinance(symbol) {
-  const endDate = subDays(new Date(), 1);
-  const startDate = subYears(endDate, 1);
-
-  const startTime = getTime(startDate);
-  const endTime = getTime(endDate);
-
-  const options = {
-    method: "GET",
-    url: "https://api.binance.com/api/v3/klines",
-    params: {
-      symbol: `${symbol}USDT`,
-      interval: '1d',
-      startTime,
-      endTime
-    },
-    headers: {
-      accept: "application/json",
-      "X-MBX-APIKEY": API_KEY,
-    },
-  };
   
-  try {
-    const response = await axios.request(options);
-    
-    return response.data;
-  } catch (err) {
-    console.error(`Binance fetching coin list error: ${err}`);
-    throw err;
-  }
+  throw new Error('Max retries exceeded');
 }
 
-function runDataAnalysis(coinsData) {
-  const results = [];
+function runDataAnalysis(coinsData: { [coinSymbol: string]: BinanceKlineData[] }): AnalysisResult[] {
+  const results: AnalysisResult[] = [];
 
   for (const [coinSymbol, coinData] of Object.entries(coinsData)) {
     const analysis = analyzeData(coinData, coinSymbol);
@@ -128,19 +124,18 @@ function runDataAnalysis(coinsData) {
   }
 
   // Sort results by buy date
-  results.sort((a, b) => a.buyDate - b.buyDate);
+  results.sort((a, b) => a.date.getTime() - b.date.getTime());
   return results;
 }
 
-
-function analyzeData(coinData, coinSymbol) {
-  let shortPeriod = 5;
-  let mediumPeriod = 10
-  let longPeriod = 50;
+function analyzeData(coinData: BinanceKlineData[], coinSymbol: string): AnalysisResult[] {
+  const shortPeriod = 5;
+  const mediumPeriod = 10;
+  const longPeriod = 50;
 
   // Extract closing prices and dates
-  const closingPrices = coinData.map((priceList) => priceList[4]);
-  const dates = coinData.map((priceList) => new Date(priceList[0]).toISOString());
+  const closingPrices: number[] = coinData.map((priceList) => Number(priceList[4]));
+  const dates: string[] = coinData.map((priceList) => new Date(priceList[0]).toISOString());
 
   const shortEMA = calculateEMA(closingPrices, shortPeriod);
   const mediumEMA = calculateEMA(closingPrices, mediumPeriod);
@@ -155,7 +150,7 @@ function analyzeData(coinData, coinSymbol) {
   );
 
   // Повертаємо список з позиціями (targetPosition 0/1)
-  return targetPositions.map(({targetPosition, date, price}) => ({
+  return targetPositions.map(({ targetPosition, date, price }) => ({
     coinSymbol,
     targetPosition,
     date,
@@ -163,21 +158,19 @@ function analyzeData(coinData, coinSymbol) {
   }));
 }
 
-async function calculatePossibleTrades(signals) {
-  let coinsDataInJson = {};
-  let boughtCoinsDataInJson = {};
+async function calculatePossibleTrades(signals: AnalysisResult[]): Promise<PossibleTrades> {
+  let coinsDataInJson: CoinsDataMap = {};
+  let boughtCoinsDataInJson: CoinsDataMap = {};
 
   try {
-    const data = await fs.readFile(FILE_PATH, 'utf8');
-    const boughtData = await fs.readFile(BOUGHT_COINS_LIST_PATH, 'utf8');
-    coinsDataInJson = JSON.parse(data);
-    boughtCoinsDataInJson = JSON.parse(boughtData);
+    coinsDataInJson = await getCoinsList();
+    boughtCoinsDataInJson = await getBoughtCoinsList();
   } catch (error) {
     console.error('Error reading files:', error);
     return {};
   }
 
-  const changes = {};
+  const changes: PossibleTrades = {};
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setHours(0, 0, 0, 0);
@@ -195,54 +188,24 @@ async function calculatePossibleTrades(signals) {
     if (target === 1 && !isBought) {
       changes[coin] = 1;
 
-      coinsDataInJson[coin].bought = true;
-
       boughtCoinsDataInJson[coin] = {
         ...coinsDataInJson[coin],
         bought: true
       };
+
+      await updateBoughtCoinsList(boughtCoinsDataInJson);
     } else if (target === 0 && isBought) {
       changes[coin] = 0;
 
-      coinsDataInJson[coin].bought = false;
-      // Remove from bought_coins_list.json
       delete boughtCoinsDataInJson[coin];
+      await updateBoughtCoinsList(boughtCoinsDataInJson);
     }
   }
 
   return changes;
 }
 
-
-async function sendTelegramMessage(message) {
-  const TELEGRAM_CHAT_ID = '379623218';
-  
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-      })
-    });
-    
-    if (response.ok) {
-      console.log('Message sent to Telegram successfully');
-    } else {
-      console.error('Failed to send message to Telegram:', await response.text());
-    }
-  } catch (error) {
-    console.error('Error sending message to Telegram:', error);
-  }
-}
-
-function formatTradingMessage(changes) {
+function formatTradingMessage(changes: PossibleTrades): string {
   const coins = Object.keys(changes);
   
   if (coins.length === 0) {
@@ -261,13 +224,12 @@ function formatTradingMessage(changes) {
   return message;
 }
 
-async function main() {
+async function main(): Promise<void> {
   try {
-    const data = await fs.readFile(FILE_PATH, 'utf8');
-    const jsonData = JSON.parse(data);
-    const coinsList = Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
+    const jsonData: CoinsDataMap = await getCoinsList();
+    const coinsList: string[] = Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
     
-    const coinsData = {};
+    const coinsData: { [coinSymbol: string]: BinanceKlineData[] } = {};
 
     for (const coin of coinsList) {
       try {
@@ -281,11 +243,11 @@ async function main() {
       }
     }
 
-    const dataAnalized = runDataAnalysis(coinsData);
+    const dataAnalyzed = runDataAnalysis(coinsData);
 
-    const possibleTrades = await calculatePossibleTrades(dataAnalized);
+    const possibleTrades = await calculatePossibleTrades(dataAnalyzed);
 
-    sendTelegramMessage(formatTradingMessage(possibleTrades));
+    await sendTelegramMessage(formatTradingMessage(possibleTrades));
   } catch (err) {
     console.error(`Main Error ${err}`);
   }

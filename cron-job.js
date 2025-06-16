@@ -1,14 +1,14 @@
-const cron = require('node-cron');
-const { exec } = require('child_process');
+import cron from 'node-cron';
+import { exec, spawn } from 'child_process';
 
 async function runTradingBot() {
   try {
     console.log('Running trading bot at:', new Date().toISOString());
     
     // Execute your main trading strategy
-    exec('node coreStrategy.js', (error, stdout, stderr) => {
+    exec('npx tsx coreStrategy.ts', (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error executing coreStrategy.js: ${error}`);
+        console.error(`Error executing coreStrategy.ts: ${error}`);
         return;
       }
       if (stderr) {
@@ -27,19 +27,23 @@ async function runDataFetch() {
   try {
     console.log('Running data fetch at:', new Date().toISOString());
     
-    // Execute data fetch script
-    exec('node fetchAndSaveData.js', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing fetchAndSaveData.js: ${error}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-      }
-      console.log(`Data fetch stdout: ${stdout}`);
+    const child = spawn('npx', ['tsx', 'fetchAndSaveData.ts'], {
+      stdio: 'inherit' // This will show logs in real-time
     });
     
-    console.log('Data fetch completed successfully');
+    child.on('close', (code) => {
+      console.log(`Data fetch finished with code: ${code}`);
+      if (code === 0) {
+        console.log('✅ Data fetch completed successfully');
+      } else {
+        console.error(`❌ Data fetch failed with exit code: ${code}`);
+      }
+    });
+    
+    child.on('error', (error) => {
+      console.error(`Error executing fetchAndSaveData.ts: ${error}`);
+    });
+    
   } catch (error) {
     console.error('Error running data fetch:', error);
   }
