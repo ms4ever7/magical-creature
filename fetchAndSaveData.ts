@@ -77,7 +77,7 @@ async function fetchCoinWithRetry<T extends any[], R>(
 async function fetchAndSaveCoins(coinList: CoinGeckoCoin[]): Promise<CoinsDataMap> {
   const coinsData: CoinsDataMap = {};
   const notUsedCoins: string[] = [
-    "usd", "usdt", "usdc", "dai", "busd", "tusd", 
+    "wbtc", "usd", "usdt", "usdc", "dai", "busd", "tusd", 
     "husd", "zusd", "usdp", "usdn", "steth", "bnsol"
   ];
   const boughtCoins: BoughtCoinsMap = await getBoughtCoinsList();
