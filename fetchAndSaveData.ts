@@ -78,7 +78,7 @@ async function fetchAndSaveCoins(coinList: CoinGeckoCoin[]): Promise<CoinsDataMa
   const coinsData: CoinsDataMap = {};
   const notUsedCoins: string[] = [
     "wbtc", "usd", "usdt", "usdc", "dai", "busd", "tusd", 
-    "husd", "zusd", "usdp", "usdn", "steth", "bnsol"
+    "husd", "zusd", "usdp", "usdn", "steth", "bnsol", "wbeth", "weeth", "weth", "usds", "cbbtc"
   ];
   const boughtCoins: BoughtCoinsMap = await getBoughtCoinsList();
 
