@@ -79,35 +79,39 @@ export type BinanceKlineData = [
 const xMasterKeyApi: string = '$2a$10$XhryB9zgJez6cNJsPU7gG.ktqNYY9eDf8BM6PaprK38Kxe21vvC4G';
 const API_KEY: string = 'vkCr2iZjkisISvtjSbRkJGla7Gz1PxmJwDM1YOqX3X2ESnTUdwBmEnduapsa2Z8J';
 const TELEGRAM_BOT_TOKEN: string = '8197515634:AAFJ3I59QgGp3tjoZdH48fCdo9lPe_zDyU4';
-const TELEGRAM_CHAT_ID: string = '379623218';
+const TELEGRAM_CHAT_IDS: string[] = ['379623218', '363337662'];
 
 // === FUNCTIONS ===
+
 export const sendTelegramMessage = async (message: string): Promise<void> => {
   const url: string = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-      })
-    });
-    
-    if (response.ok) {
-      console.log('Message sent to Telegram successfully');
-    } else {
-      const errorText: string = await response.text();
-      console.error('Failed to send message to Telegram:', errorText);
+
+  for (const chatId of TELEGRAM_CHAT_IDS) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'HTML'
+        })
+      });
+
+      if (response.ok) {
+        console.log(`Message sent to Telegram chat ID ${chatId}`);
+      } else {
+        const errorText: string = await response.text();
+        console.error(`Failed to send message to chat ID ${chatId}:`, errorText);
+      }
+    } catch (error) {
+      console.error(`Error sending message to chat ID ${chatId}:`, error);
     }
-  } catch (error) {
-    console.error('Error sending message to Telegram:', error);
   }
 };
+
 
 export const fetchCoinListFromCoinGecko = async (): Promise<CoinGeckoMarketData[]> => {
   const options: AxiosRequestConfig = {
