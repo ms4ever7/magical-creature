@@ -75,12 +75,5 @@ cron.schedule('1 0 * * *', () => {
   timezone: "UTC"
 });
 
-cron.schedule('* * * * *', () => {
-  console.log(`Test cron job triggered at ${new Date().toISOString()}`);
-  runTradingBot();  // Replace with your actual bot logic
-}, {
-  timezone: "UTC"
-});
-
 // Keep the process alive
 process.stdin.resume();
