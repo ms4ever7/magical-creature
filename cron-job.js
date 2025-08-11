@@ -73,6 +73,17 @@ function isLastDayOfMonth(date) {
   return tomorrow.getDate() === 1;
 }
 
+// Add graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, gracefully shutting down...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, gracefully shutting down...');
+  process.exit(0);
+});
+
 // Monthly data fetch - Run on the last day of each month at 11:59 PM UTC
 cron.schedule('59 23 28-31 * *', async () => {
   const today = new Date();
