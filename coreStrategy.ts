@@ -2,10 +2,10 @@ import {
   getCoinsList,
   getBoughtCoinsList,
   updateBoughtCoinsList,
-  fetchCoinFromBinance,
   sendTelegramMessage,
-  BinanceKlineData,
-  CoinsDataMap
+  KrakenOHLCData,
+  CoinsDataMap,
+  fetchCoinFromKraken
 } from './gateway.ts';
 
 
@@ -115,7 +115,7 @@ async function fetchCoinWithRetry<T extends any[], R>(
   throw new Error('Max retries exceeded');
 }
 
-function runDataAnalysis(coinsData: { [coinSymbol: string]: BinanceKlineData[] }): AnalysisResult[] {
+function runDataAnalysis(coinsData: { [coinSymbol: string]: KrakenOHLCData[] }): AnalysisResult[] {
   const results: AnalysisResult[] = [];
 
   for (const [coinSymbol, coinData] of Object.entries(coinsData)) {
@@ -128,14 +128,14 @@ function runDataAnalysis(coinsData: { [coinSymbol: string]: BinanceKlineData[] }
   return results;
 }
 
-function analyzeData(coinData: BinanceKlineData[], coinSymbol: string): AnalysisResult[] {
+function analyzeData(coinData: KrakenOHLCData[], coinSymbol: string): AnalysisResult[] {
   const shortPeriod = 5;
   const mediumPeriod = 10;
   const longPeriod = 50;
 
   // Extract closing prices and dates
   const closingPrices: number[] = coinData.map((priceList) => Number(priceList[4]));
-  const dates: string[] = coinData.map((priceList) => new Date(priceList[0]).toISOString());
+  const dates: string[] = coinData.map((priceList) => new Date(priceList[0] * 1000).toISOString());
 
   const shortEMA = calculateEMA(closingPrices, shortPeriod);
   const mediumEMA = calculateEMA(closingPrices, mediumPeriod);
@@ -229,12 +229,12 @@ async function main(): Promise<void> {
     const jsonData: CoinsDataMap = await getCoinsList();
     const coinsList: string[] = Object.values(jsonData).map(coin => coin.symbol.toUpperCase());
     
-    const coinsData: { [coinSymbol: string]: BinanceKlineData[] } = {};
+    const coinsData: { [coinSymbol: string]: KrakenOHLCData[] } = {};
 
     for (const coin of coinsList) {
       try {
         console.log(`Fetching data for ${coin}...`);
-        const data = await fetchCoinWithRetry(fetchCoinFromBinance, coin);
+        const data = await fetchCoinWithRetry(fetchCoinFromKraken, coin);
         coinsData[coin] = data;
 
         await delay(2000); // 2 second delay

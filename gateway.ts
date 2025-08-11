@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { subDays, subYears, getTime } from 'date-fns';
+import { subDays, getTime, subMonths } from 'date-fns';
 
 // === TYPES ===
 interface CoinGeckoMarketData {
@@ -59,21 +59,18 @@ interface JsonBinResponse {
   };
 }
 
-// Binance Klines data format: [timestamp, open, high, low, close, volume, closeTime, quoteVolume, count, takerBuyVolume, takerBuyQuoteVolume, ignore]
-export type BinanceKlineData = [
-  number,  // Open time
-  string,  // Open price
-  string,  // High price
-  string,  // Low price
-  string,  // Close price
-  string,  // Volume
-  number,  // Close time
-  string,  // Quote asset volume
-  number,  // Number of trades
-  string,  // Taker buy base asset volume
-  string,  // Taker buy quote asset volume
-  string   // Ignore
-];
+
+export interface KrakenOHLCData {
+  time: Date;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  vwap: number;
+  volume: number;
+  count: number;
+};
+
 
 // === CONSTANTS ===
 const xMasterKeyApi: string = '$2a$10$XhryB9zgJez6cNJsPU7gG.ktqNYY9eDf8BM6PaprK38Kxe21vvC4G';
@@ -139,33 +136,40 @@ export const fetchCoinListFromCoinGecko = async (): Promise<CoinGeckoMarketData[
   }
 };
 
-export const fetchCoinFromBinance = async (symbol: string): Promise<BinanceKlineData[]> => {
-  const endDate: Date = subDays(new Date(), 1);
-  const startDate: Date = subYears(endDate, 1);
 
-  const startTime: number = getTime(startDate);
-  const endTime: number = getTime(endDate);
+export const fetchCoinFromKraken = async (symbol: string): Promise<KrakenOHLCData[]> => {
+  const endDate: Date = subDays(new Date(), 1);
+  const startDate: Date = subMonths(endDate, 6);
+
+  const since: number = Math.floor(getTime(startDate) / 1000);
 
   const options: AxiosRequestConfig = {
     method: "GET",
-    url: "https://api.binance.com/api/v3/klines",
+    url: "https://api.kraken.com/0/public/OHLC",
     params: {
-      symbol: `${symbol.toUpperCase()}USDT`,
-      interval: '1d',
-      startTime,
-      endTime
+      pair: `${symbol.toUpperCase()}/USD`, // you control the symbol here
+      interval: 1440,
+      since,
     },
     headers: {
       accept: "application/json",
-      "X-MBX-APIKEY": API_KEY,
     },
   };
-  
+
   try {
-    const response = await axios.request<BinanceKlineData[]>(options);
-    return response.data;
+    const response = await axios.request(options);
+    const { error, result } = response.data;
+    
+    if (error && error.length > 0) {
+      throw new Error(`Kraken API error: ${error.join(", ")}`);
+    }
+
+    const pairKey = Object.keys(result).find((key) => key !== "last");
+    if (!pairKey) throw new Error("Invalid Kraken response format");
+
+    return result[pairKey];
   } catch (err) {
-    console.error(`Binance fetching coin list error: ${err}`);
+    console.error(`Kraken fetching coin - ${symbol} list error: ${err}`);
     throw err;
   }
 };
