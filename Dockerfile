@@ -7,14 +7,11 @@ WORKDIR /app
 # Copy package.json and yarn.lock
 COPY package.json yarn.lock ./
 
-# Install dependencies
+# Install dependencies (including tsx if needed)
 RUN yarn install --frozen-lockfile
 
 # Copy all source files
 COPY . .
 
-# Build TypeScript if needed (optional, if you use tsx to run directly, skip this)
-RUN yarn tsc
-
-# Command to run your scheduler script (assuming it's the entry point)
+# Run your compiled JS cron job script
 CMD ["node", "cron-job.js"]
