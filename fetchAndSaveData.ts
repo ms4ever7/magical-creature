@@ -1,5 +1,5 @@
 import { 
-  fetchCoinFromBinance, 
+  fetchCoinFromKraken, 
   fetchCoinListFromCoinGecko, 
   updateCoinsList, 
   getBoughtCoinsList 
@@ -93,7 +93,7 @@ async function fetchAndSaveCoins(coinList: CoinGeckoCoin[]): Promise<CoinsDataMa
 
     try {
       console.log(`Checking ${coin.symbol} on Binance...`);
-      const binanceData: any = await fetchCoinWithRetry(fetchCoinFromBinance, coin.symbol);
+      const binanceData: any = await fetchCoinWithRetry(fetchCoinFromKraken, coin.symbol);
 
       if (binanceData) {
         coinsData[coin.symbol] = {
