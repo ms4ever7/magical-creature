@@ -1,5 +1,5 @@
 # Use official Node.js image as the base
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Set working directory inside the container
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN yarn install --frozen-lockfile
 COPY . .
 
 # Build TypeScript if needed (optional, if you use tsx to run directly, skip this)
-# RUN yarn tsc
+RUN yarn tsc
 
 # Command to run your scheduler script (assuming it's the entry point)
 CMD ["node", "cron-job.js"]
