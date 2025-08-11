@@ -79,6 +79,7 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
+
 process.on('SIGINT', () => {
   console.log('Received SIGINT, gracefully shutting down...');
   process.exit(0);
@@ -97,6 +98,17 @@ cron.schedule('59 23 28-31 * *', async () => {
   }
 }, {
   timezone: "UTC"
+});
+
+cron.schedule('*/2 * * * *', async () => {  // Runs every minute for testing
+  console.log('IT RUNS SUCCESSFULY');
+  try {
+    await runTradingBot();
+  } catch (error) {
+    console.error('Daily trading bot failed:', error);
+  }
+}, {
+  timezone: 'UTC'
 });
 
 // Schedule to run at 12:01 AM UTC every day (2:01 AM Poland time)
