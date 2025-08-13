@@ -8,7 +8,6 @@ kill_timeout = 5
   cron = "supercronic /app/crontab"
 
 [env]
-  # Set any environment variables your app needs
   NODE_ENV = "production"
 
 [experimental]
@@ -16,6 +15,8 @@ kill_timeout = 5
   auto_rollback = true
 
 [[services]]
+  # This service runs the main app process
+  process = "app"
   internal_port = 3000
   protocol = "tcp"
 
