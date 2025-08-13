@@ -43,6 +43,12 @@ interface BoughtCoinsMap {
 // === UTILS ===
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+function isLastDayOfMonth(date) {
+  const tomorrow = new Date(date);
+  tomorrow.setDate(date.getDate() + 1);
+  return tomorrow.getDate() === 1;
+}
+
 async function fetchCoinWithRetry<T extends any[], R>(
   fetchFunction: (...args: T) => Promise<R>, 
   ...args: T
@@ -146,10 +152,16 @@ async function fetchAndSaveCoins(coinList: CoinGeckoCoin[]): Promise<CoinsDataMa
 }
 
 async function main(): Promise<void> {
+  const today = new Date();
+  if (!isLastDayOfMonth(today)) {
+    console.log("Not the last day of the month. Skipping fetch.");
+    return;
+  }
+
   try {
     const coinList: CoinGeckoCoin[] = await fetchCoinListFromCoinGecko();
-
     await fetchAndSaveCoins(coinList);
+    
   } catch (err) {
     console.error(`Binance error: ${err}`);
   }

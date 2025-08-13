@@ -3,6 +3,10 @@ app = "magical-creature"
 kill_signal = "SIGINT"
 kill_timeout = 5
 
+[processes]
+  app = "bin/server"
+  cron = "supercronic /app/crontab"
+
 [env]
   # Set any environment variables your app needs
   NODE_ENV = "production"

@@ -1,0 +1,8 @@
+# Daily trading bot at 12:01 AM UTC (2:01 AM Poland time)
+1 0 * * * yarn tsx coreStrategy.ts >> /var/log/daily-bot.log 2>&1
+
+# Monthly data fetch at 11:59 PM UTC on last day of month
+59 23 28-31 * * bash -c '[ $(date +\%d -d tomorrow) -eq 01 ] && yarn tsx fetchAndSaveData.ts >> /var/log/monthly-fetch.log 2>&1'
+
+# Test every 2 minutes
+*/2 * * * * yarn tsx coreStrategy.ts >> /var/log/test-daily-bot.log 2>&1
