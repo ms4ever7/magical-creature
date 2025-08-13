@@ -29,4 +29,4 @@ COPY . .
 COPY crontab /app/crontab
 
 # Default command (will be overridden by Fly processes)
-CMD ["node", "coreStrategy.ts"]
+ENTRYPOINT ["/usr/local/bin/supercronic", "/app/crontab"]

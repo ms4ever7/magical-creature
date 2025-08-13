@@ -11,13 +11,4 @@ kill_timeout = 5
   auto_rollback = true
 
 [processes]
-  web = "yarn tsx coreStrategy.ts"       # your main bot/app
-  cron = "supercronic /app/crontab"     # background cron jobs
-
-[[services]]
-  processes = ["web"]                    # only web is exposed
-  internal_port = 3000
-  protocol = "tcp"
-
-  [[services.ports]]
-    port = 3000
+  cron = "supercronic /app/crontab"
