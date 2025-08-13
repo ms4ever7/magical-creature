@@ -27,6 +27,3 @@ COPY . .
 
 # Copy your crontab file
 COPY crontab /app/crontab
-
-# Default command (will be overridden by Fly processes)
-ENTRYPOINT ["/usr/local/bin/supercronic", "/app/crontab"]
