@@ -3,10 +3,6 @@ app = "magical-creature"
 kill_signal = "SIGINT"
 kill_timeout = 5
 
-[processes]
-  app = "bin/server"
-  cron = "supercronic /etc/crontab"
-
 [env]
   NODE_ENV = "production"
 
@@ -14,11 +10,14 @@ kill_timeout = 5
   allowed_public_ports = []
   auto_rollback = true
 
+[processes]
+  web = "yarn tsx coreStrategy.ts"       # your main bot/app
+  cron = "supercronic /app/crontab"     # background cron jobs
+
 [[services]]
-# Only the main app process needs a service
-process = "app"
-internal_port = 3000
-protocol = "tcp"
+  processes = ["web"]                    # only web is exposed
+  internal_port = 3000
+  protocol = "tcp"
 
   [[services.ports]]
-  port = 3000
+    port = 3000
