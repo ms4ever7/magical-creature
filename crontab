@@ -3,6 +3,3 @@
 
 # Monthly data fetch at 11:59 PM UTC on last day of month
 59 23 28-31 * * bash -c '[ $(date +\%d -d tomorrow) -eq 01 ] && yarn tsx fetchAndSaveData.ts >> /var/log/monthly-fetch.log 2>&1'
-
-# Every 10 minutes
-*/10 * * * * yarn tsx coreStrategy.ts >> /var/log/test-daily-bot.log 2>&1
