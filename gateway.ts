@@ -75,7 +75,7 @@ export interface KrakenOHLCData {
 // === CONSTANTS ===
 const xMasterKeyApi: string = '$2a$10$XhryB9zgJez6cNJsPU7gG.ktqNYY9eDf8BM6PaprK38Kxe21vvC4G';
 const TELEGRAM_BOT_TOKEN: string = '8197515634:AAFJ3I59QgGp3tjoZdH48fCdo9lPe_zDyU4';
-const TELEGRAM_CHAT_IDS: string[] = ['379623218', '363337662'];
+const TELEGRAM_CHAT_IDS: string[] = ['379623218', '363337662', '619435878'];
 
 // === FUNCTIONS ===
 
